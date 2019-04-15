@@ -11,24 +11,24 @@ class Processor:
     def inc_idle_time(self, time_inc):
         self.__cur_time += time_inc
 
-    def process(self, proc, time_inc):
+    def process(self, proc_ind, time_inc):
         self.inc_idle_time(time_inc)
         self.__res_time += time_inc * self.running_procs
-        proc -= time_inc
+        self.proc_list[proc_ind] -= time_inc
 
     def add_next_process(self):
-        i = 0
-        while i < len(self.remote_proc_list):
-            if self.__cur_time >= self.remote_proc_list[i][0]:
-                self.proc_list.append(self.remote_proc_list[i][1])
-                self.running_procs += 1
-                i += 1
-                yield
-            else:
-                yield
-        self.done_processing = True
+        if len(self.remote_proc_list) > 0 and self.__cur_time >= self.remote_proc_list[0][0]:
+            self.proc_list.append(self.remote_proc_list[0][1])
+            self.remote_proc_list.popleft()
+            self.running_procs += 1
+            self.add_next_process()
+        else:
+            return
 
-    def termination_check(self, proc_time):
-        if proc_time == 0:
+    def termination_check(self, proc_ind):
+        if self.proc_list[proc_ind] == 0:
             self.running_procs -= 1
             self.finished_procs += 1
+
+    def print_result(self):
+        print('Average residence time:', self.__res_time / self.finished_procs)

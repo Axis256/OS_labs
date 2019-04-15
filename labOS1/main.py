@@ -1,31 +1,36 @@
 from random import randint
 from processor import Processor
+from collections import deque
 
 
 def gen_processes():
     p_count = randint(30, 50)
-    proc_list = [(0, randint(2, 10))]
+    proc_list = deque(maxlen=p_count)
+    proc_list.append((0, randint(2, 10)))
     for i in range(1, p_count):
-        proc_list.append((proc_list[i - 1][0] + randint(2, 10), randint(4, 8)))
+        proc_list.append((proc_list[-1][0] + randint(2, 10), randint(4, 8)))
     return proc_list
 
 
 def round_robin(proc_list):
     cpu = Processor(proc_list)
-    next(cpu.add_next_process())
-    # cpu.add_next_process()
+    init_len = len(proc_list)
+    cpu.add_next_process()
     while not cpu.done_processing:
         if cpu.running_procs == 0:
             cpu.inc_idle_time(1)
-            next(cpu.add_next_process())
+            cpu.add_next_process()
         else:
-            for proc_time in cpu.proc_list:
-                if proc_time > 0:
-                    cpu.process(proc_time, min(proc_time, 2))
-                    cpu.termination_check(proc_time)
-                    next(cpu.add_next_process())
+            for i in range (len(cpu.proc_list)):
+                if cpu.proc_list[i] > 0:
+                    cpu.process(i, min(cpu.proc_list[i], 2))
+                    cpu.termination_check(i)
+                    cpu.add_next_process()
                     print(cpu.running_procs, cpu.finished_procs)
                     print(cpu.proc_list)
+        if cpu.finished_procs == init_len:
+            cpu.done_processing = True
+    cpu.print_result()
 
 
 # def round_robin(proc_list):
@@ -89,4 +94,4 @@ def round_robin(proc_list):
 #             if next_ind + 1 < len(proc_list):
 #                 next_ind += 1
 
-print(round_robin(gen_processes()))
+round_robin(gen_processes())
